@@ -1,0 +1,43 @@
+service: cloudfront-invalidation
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  runtime: python3.8
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "cloudfront:CreateInvalidation"
+      Resource:
+        {
+          "Fn::Join":
+            [
+              "",
+              [
+                "arn:aws:cloudfront::",
+                { "Ref": "AWS::AccountId" },
+                ":distribution/",
+                "${env:DISTRIBUTION_ID}",
+              ],
+            ],
+        }
+
+functions:
+  cloudfront-invalidation:
+    name: cloudfront-invalidation-${env:DISTRIBUTION_ID}
+    handler: app.lambda_handler
+    description: "Create a CloudFront invalidation when S3 origin contents change"
+    timeout: 15
+    events:
+      - s3:
+          bucket: ${env:S3_ORIGIN_BUCKET}
+          existing: true
+          event: "s3:ObjectCreated:*"
+          rules: ${file(./eventFilters.js):rules}
+      - s3:
+          bucket: ${env:S3_ORIGIN_BUCKET}
+          existing: true
+          event: "s3:ObjectRemoved:*"
+          rules: ${file(./eventFilters.js):rules}
+    environment:
+      CLOUDFRONT_DISTRIBUTION_ID: ${env:DISTRIBUTION_ID}
