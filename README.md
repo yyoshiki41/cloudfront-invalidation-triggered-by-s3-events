@@ -36,6 +36,9 @@ serverless deploy
   S3 Bucket Name
 - `DISTRIBUTION_ID`
   CloudFront distribution id
+
+#### Optional
+
 - `PREFIX`
   Configure notifications to be filtered by the prefix of the key name of objects
 - `SUFFIX`
